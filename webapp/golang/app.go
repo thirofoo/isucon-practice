@@ -92,6 +92,7 @@ func dbInitialize() {
 
 func tryLogin(accountName, password string) *User {
 	u := User{}
+	// indexを貼っているので速い
 	err := db.Get(&u, "SELECT * FROM users WHERE account_name = ? AND del_flg = 0", accountName)
 	if err != nil {
 		return nil
@@ -449,6 +450,7 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 
+	// user_id に indexを貼る。
 	err = db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC", user.ID)
 	if err != nil {
 		log.Print(err)

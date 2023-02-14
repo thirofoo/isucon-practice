@@ -1,2 +1,4 @@
-sudo rm -f ./log/mysql/mysql-slow-2*
-sudo rm -f ./log/nginx/access-2*
+cd $(dirname $0)
+cd ../
+sudo rm -f ./logs/mysql/mysql-slow-2*
+sudo rm -f ./logs/nginx/access-2*
