@@ -1,0 +1,14 @@
+matching_groups:
+  - /posts/[0-9]+
+  - /@\w+
+sort: p95
+reverse: true
+metrics:
+  - count
+  - method
+  - uri
+  - min
+  - avg
+  - max
+  - sum
+file: ./logs/nginx/access.log
