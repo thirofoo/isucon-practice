@@ -2,7 +2,6 @@ package main
 
 import (
 	crand "crypto/rand"
-	"crypto/sha512"
 	"fmt"
 	"html/template"
 	"io"
@@ -191,8 +190,25 @@ func makePosts(results []Post, csrfToken string, allComments bool) ([]Post, erro
 			return nil, err
 		}
 
-		for i := 0; i < len(comments); i++ {
-			err := db.Get(&comments[i].User, "SELECT * FROM `users` WHERE `id` = ?", comments[i].UserID)
+		var users []User
+
+		if len(comments) > 0 {
+			user_ids := make([]int, len(comments))
+
+			for i := 0; i < len(comments); i++ {
+				user_ids[i] = comments[i].UserID
+			}
+
+			sql := "SELECT * FROM `users` WHERE `id` IN (?)"
+
+			// sqlx.In (パラメータ数増設)
+			sql, params, err := sqlx.In(sql, user_ids)
+			if err != nil {
+				return nil, err
+			}
+
+			// sqlx.In で置き換えた ? を元に戻す
+			err = db.Select(&users, sql, params...)
 			if err != nil {
 				return nil, err
 			}
