@@ -404,11 +404,45 @@ func getIndex(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 
-	err := db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC")
-	if err != nil {
-		log.Print(err)
-		return
+	for len(results) < 20 {
+		var tmp []Post
+		err := db.Select(&tmp, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` ORDER BY `created_at` DESC LIMIT 1")
+		if err != nil {
+			log.Print(err)
+			return
+		}
+
+		var users [] User
+		var user_ids []int
+		for _, p := range tmp {
+			user_ids = append(user_ids, p.UserID)
+		}
+		sql := "SELECT * FROM `users` WHERE `id` IN (?)"
+
+		// sqlx.In (パラメータ数増設)
+		sql, params, err := sqlx.In(sql, user_ids)
+		if err != nil {
+			log.Print(err)
+			return
+		}
+
+		// sqlx.In で置き換えた ? を元に戻す
+		err = db.Select(&users, sql, params...)
+		if err != nil {
+			log.Print(err)
+			return
+		}
+
+		nowIdx := 0
+		for _, u := range users {
+			if u.DelFlg == 0 {
+				results = append(results, tmp[nowIdx])
+			}
+			nowIdx++
+		}
 	}
+
+
 
 	posts, err := makePosts(results, getCSRFToken(r), false)
 	if err != nil {
@@ -450,7 +484,6 @@ func getAccountName(w http.ResponseWriter, r *http.Request) {
 
 	results := []Post{}
 
-	// user_id に indexを貼る。
 	err = db.Select(&results, "SELECT `id`, `user_id`, `body`, `mime`, `created_at` FROM `posts` WHERE `user_id` = ? ORDER BY `created_at` DESC", user.ID)
 	if err != nil {
 		log.Print(err)
